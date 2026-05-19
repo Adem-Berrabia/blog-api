@@ -1,0 +1,34 @@
+# ── Dependencies ──────────────────────────
+blog-frontend/node_modules/
+blog-backend/node_modules/
+
+# ── Environment variables ──────────────────
+blog-frontend/.env
+blog-frontend/.env.local
+blog-frontend/.env.development.local
+blog-frontend/.env.test.local
+blog-frontend/.env.production.local
+blog-backend/.env
+
+# ── Uploads (user files) ──────────────────
+blog-backend/uploads/
+
+# ── Build ─────────────────────────────────
+blog-frontend/build/
+
+# ── Logs ──────────────────────────────────
+*.log
+npm-debug.log*
+logs/
+
+# ── Coverage ──────────────────────────────
+blog-backend/coverage/
+
+# ── OS ────────────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ── Editor ────────────────────────────────
+.vscode/
+.idea/
+test.txt

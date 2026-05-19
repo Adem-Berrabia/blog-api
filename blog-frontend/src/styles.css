@@ -1,0 +1,32 @@
+.auth-bg {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+}
+
+.article-card {
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+.article-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12) !important;
+}
+
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.page-item.active .page-link {
+  background-color: #ffc107;
+  border-color: #ffc107;
+  color: #000;
+}
+.page-link {
+  color: #ffc107;
+}
+.page-link:hover {
+  color: #e0a800;
+}

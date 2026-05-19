@@ -1,0 +1,280 @@
+openapi: 3.0.0
+info:
+  title: Blog API
+  version: 1.0.0
+  description: API REST - Plateforme Blog avec Express & MongoDB
+  contact:
+    name: Blog API Support
+
+servers:
+  - url: http://localhost:5000/api
+    description: Serveur de développement
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    User:
+      type: object
+      properties:
+        _id: { type: string }
+        name: { type: string }
+        email: { type: string }
+        role: { type: string, enum: [user, admin] }
+        avatar: { type: string, nullable: true }
+        bio: { type: string }
+        createdAt: { type: string, format: date-time }
+
+    Article:
+      type: object
+      properties:
+        _id: { type: string }
+        title: { type: string }
+        slug: { type: string }
+        summary: { type: string }
+        category: { type: string }
+        tags: { type: array, items: { type: string } }
+        status: { type: string, enum: [draft, published] }
+        views: { type: integer }
+        author: { $ref: '#/components/schemas/User' }
+        createdAt: { type: string, format: date-time }
+
+    Comment:
+      type: object
+      properties:
+        _id: { type: string }
+        content: { type: string }
+        author: { $ref: '#/components/schemas/User' }
+        article: { type: string }
+        isEdited: { type: boolean }
+        createdAt: { type: string, format: date-time }
+
+paths:
+  /auth/register:
+    post:
+      tags: [Auth]
+      summary: Inscription
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, email, password]
+              properties:
+                name: { type: string, example: Jean Dupont }
+                email: { type: string, example: jean@example.com }
+                password: { type: string, example: motdepasse123 }
+                bio: { type: string }
+      responses:
+        '201':
+          description: Inscription réussie
+
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Connexion
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string, example: jean@example.com }
+                password: { type: string, example: motdepasse123 }
+      responses:
+        '200':
+          description: Connexion réussie, retourne le token JWT
+
+  /auth/me:
+    get:
+      tags: [Auth]
+      summary: Récupérer son profil
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Profil utilisateur
+    put:
+      tags: [Auth]
+      summary: Mettre à jour son profil
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string }
+                bio: { type: string }
+      responses:
+        '200':
+          description: Profil mis à jour
+
+  /articles:
+    get:
+      tags: [Articles]
+      summary: Liste des articles (avec filtres + pagination)
+      parameters:
+        - in: query
+          name: page
+          schema: { type: integer, default: 1 }
+        - in: query
+          name: limit
+          schema: { type: integer, default: 10 }
+        - in: query
+          name: category
+          schema: { type: string }
+        - in: query
+          name: search
+          schema: { type: string }
+        - in: query
+          name: tags
+          schema: { type: string, description: "Tags séparés par virgule" }
+        - in: query
+          name: sortBy
+          schema: { type: string, default: createdAt }
+        - in: query
+          name: order
+          schema: { type: string, enum: [asc, desc], default: desc }
+      responses:
+        '200':
+          description: Liste paginée des articles
+    post:
+      tags: [Articles]
+      summary: Créer un article
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [title, content]
+              properties:
+                title: { type: string }
+                content: { type: string }
+                summary: { type: string }
+                category: { type: string }
+                tags: { type: array, items: { type: string } }
+                status: { type: string, enum: [draft, published] }
+                image: { type: string, format: binary }
+      responses:
+        '201':
+          description: Article créé
+
+  /articles/{id}:
+    get:
+      tags: [Articles]
+      summary: Détail d'un article
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+          description: ID MongoDB ou slug
+      responses:
+        '200':
+          description: Article avec commentaires
+    put:
+      tags: [Articles]
+      summary: Modifier un article
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Article mis à jour
+    delete:
+      tags: [Articles]
+      summary: Supprimer un article
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Article supprimé
+
+  /articles/{articleId}/comments:
+    get:
+      tags: [Commentaires]
+      summary: Commentaires d'un article
+      parameters:
+        - in: path
+          name: articleId
+          required: true
+          schema: { type: string }
+        - in: query
+          name: page
+          schema: { type: integer }
+        - in: query
+          name: limit
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Liste des commentaires
+    post:
+      tags: [Commentaires]
+      summary: Ajouter un commentaire
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: articleId
+          required: true
+          schema: { type: string }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [content]
+              properties:
+                content: { type: string }
+                parentComment: { type: string, description: "ID du commentaire parent (réponse)" }
+      responses:
+        '201':
+          description: Commentaire ajouté
+
+  /comments/{id}:
+    put:
+      tags: [Commentaires]
+      summary: Modifier un commentaire
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [content]
+              properties:
+                content: { type: string }
+      responses:
+        '200':
+          description: Commentaire modifié
+    delete:
+      tags: [Commentaires]
+      summary: Supprimer un commentaire
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Commentaire supprimé
